@@ -400,3 +400,5 @@ FodyWeavers.xsd
 env_weather
 venv
 .env
+.model/
+.bert/
