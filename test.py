@@ -1,4 +1,4 @@
-#%%
+
 import os
 from dotenv import load_dotenv
 import azure.cognitiveservices.speech as speechsdk
@@ -31,49 +31,11 @@ def recognize_from_microphone():
             print("Did you set the speech resource key and region values?")
 
 a=recognize_from_microphone()
-from googletrans import Translator
-translator = Translator()
-translated = translator.translate(a,dest='en')
-print(translated.text)
-b=translated.text
-import spacy
-nlp = spacy.load("en_core_web_md")
-doc = nlp(b)
-print(doc.ents)
-for token in doc:
-    print(token.text,token.head.text,token.dep_)
-for ent in doc.ents:
-    print(ent.text, ent.label_)
+from transformers import pipeline
+
+nlp = pipeline("ner", model = "bert/pipeline")
+
+doc = nlp(a)
 print(doc)
-loc=[ent.text for ent in doc.ents if ent.label_ in ['LOC', 'GPE', 'FAC','ORG','PERSON']]
-date=[ent.text for ent in doc.ents if ent.label_ in ['DATE','TIME']]  
-print(loc,date)
-loc1=' '.join(loc)
-from geopy.geocoders import Nominatim
-from sys import argv
-def city_to_coordinates(city):
-
-    geolocator = Nominatim(user_agent="vocal_weather_app")
-
-    location = geolocator.geocode(city)
-    
-    lat = location.latitude
-    lon = location.longitude
-
-    print(f'Latitude, Longitude : {lat, lon}')
-    return({'lat': lat,
-            'lon' : lon})
-a=city_to_coordinates(loc1)
-print(a)
-
-def get_weather_forecast(lat, lon, api_key):
-    url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}"
-    response = requests.get(url)
-    
-    if response.status_code == 200:
-        data = response.json()
-        return data
-    else:
-        print("Error")
-        return None
-"""print(get_weather_forecast(a['lat'], a['lon'],"bb36cfc220c0ba490f150b9c4dad1ecd"))"""
+for i in doc:
+    print(i['word'], i['entity'])
