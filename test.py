@@ -39,3 +39,5 @@ doc = nlp(a)
 print(doc)
 for i in doc:
     print(i['word'], i['entity'])
+loc=[ent.text for ent in doc.ents if ent.label_ in ['LOC', 'GPE', 'FAC','ORG','PERSON']]
+date=[ent.text for ent in doc.ents if ent.label_ in ['DATE','TIME']]  

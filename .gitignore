@@ -400,5 +400,10 @@ FodyWeavers.xsd
 env_weather
 venv
 .env
+<<<<<<< HEAD
 model
 bert
+=======
+.model/
+.bert/
+>>>>>>> 198c3b4160754a396623b2b55754a97aa277a055
