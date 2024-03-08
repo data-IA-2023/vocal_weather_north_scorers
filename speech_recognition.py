@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 import azure.cognitiveservices.speech as speechsdk
 import requests
 
-load_dotenv()
+"""load_dotenv()
 def recognize_from_microphone():
     # This example
     #  requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
@@ -30,7 +30,8 @@ def recognize_from_microphone():
             print("Error details: {}".format(cancellation_details.error_details))
             print("Did you set the speech resource key and region values?")
 
-a=recognize_from_microphone()
+a=recognize_from_microphone()"""
+a="Tours, Beaumont, la Rance, Saint Cyr sur Loire, demain"
 from googletrans import Translator
 translator = Translator()
 translated = translator.translate(a,dest='en')
@@ -76,4 +77,4 @@ def get_weather_forecast(lat, lon, api_key):
     else:
         print("Error")
         return None
-"""print(get_weather_forecast(a['lat'], a['lon'],"bb36cfc220c0ba490f150b9c4dad1ecd"))"""
+"""print(get_weather_forecast(a['lat'], a['lon'],""))"""
