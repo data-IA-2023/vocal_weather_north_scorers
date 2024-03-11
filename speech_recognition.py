@@ -31,7 +31,7 @@ def recognize_from_microphone():
             print("Did you set the speech resource key and region values?")
 
 a=recognize_from_microphone()"""
-a="Tours, Beaumont, la Rance, Saint Cyr sur Loire, demain"
+"""a="Tours, Beaumont, la Rance, Saint Cyr sur Loire, demain"
 from googletrans import Translator
 translator = Translator()
 translated = translator.translate(a,dest='en')
@@ -49,7 +49,7 @@ print(doc)
 loc=[ent.text for ent in doc.ents if ent.label_ in ['LOC', 'GPE', 'FAC','ORG','PERSON']]
 date=[ent.text for ent in doc.ents if ent.label_ in ['DATE','TIME']]  
 print(loc,date)
-loc1=' '.join(loc)
+loc1=' '.join(loc)"""
 from geopy.geocoders import Nominatim
 from sys import argv
 def city_to_coordinates(city):
@@ -64,8 +64,9 @@ def city_to_coordinates(city):
     print(f'Latitude, Longitude : {lat, lon}')
     return({'lat': lat,
             'lon' : lon})
+loc1='Tours'
 a=city_to_coordinates(loc1)
-print(a)
+
 
 def get_weather_forecast(lat, lon, api_key):
     url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}"
@@ -77,4 +78,4 @@ def get_weather_forecast(lat, lon, api_key):
     else:
         print("Error")
         return None
-"""print(get_weather_forecast(a['lat'], a['lon'],""))"""
+print(get_weather_forecast(a['lat'], a['lon'],"bb36cfc220c0ba490f150b9c4dad1ecd"))

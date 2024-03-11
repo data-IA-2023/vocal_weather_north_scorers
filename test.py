@@ -43,3 +43,26 @@ loc=[i['word'] for i in doc if i['entity'] in ['I-LOC']]
 date=[i['word'] for i in doc if i['entity'] in ['I-DATE']]  
 print(loc)
 print(date)
+
+def colle_mot(a):
+    b=[]
+    for i in a:
+        if i[0]!='_':
+            b[-1]+=i
+        else:
+            b.append(i)
+
+def localisation(a):
+    a.split(' ')
+
+import re
+def date(a):
+    date = r'(aujourd\'hui|demain|après-demain|dans (\d+) jour;)'
+    time = r'(matin|après-midi|soir|nuit|\d+:\d+)'
+    b=re.search(date, a)
+    c=re.search(time,a)
+    if b:
+        if re.group(0):
+            a+1
+from datetime import datetime
+print(datetime.now)

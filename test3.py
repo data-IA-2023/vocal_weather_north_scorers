@@ -1,12 +1,12 @@
-from googletrans import Translator
-translator = Translator()
-translated = translator.translate("Quelle temps fera t'il à tours hier",dest='en')
-print(translated.text)
-a=translated.text
-import spacy
-nlp = spacy.load("en_core_web_md")
-doc = nlp(a)
-print(doc.ents)
-for ent in doc.ents:
-    print(ent.text, ent.label_)
-print(doc)
+import pyodbc
+from sqlalchemy import create_engine
+import urllib
+
+params = urllib.parse.quote_plus
+(r'Driver={ODBC Driver 18 for SQL Server};Server=tcp:north-server.database.windows.net,1433;Database=North Data;Uid=Odin;Pwd=Valhalla1;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;')
+conn_str = 'mssql+pyodbc:///?odbc_connect={}'.format(params)
+try:
+    engine_azure = create_engine(conn_str,echo=True)
+    print('connection is ok')
+except:
+    print('error')
