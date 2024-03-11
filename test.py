@@ -98,14 +98,14 @@ import re
 from datetime import datetime, timedelta
 def date(a):
     jours=['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
-    date = r'(aujourd\'hui|demain|aprèsmain|après-demain|dans (\d+) h|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|(\d+) jour)'
+    date = r'(aujourd\'hui|demain|aprèsmain|après-demain|(\d+) h|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|(\d+) jour)'
     time = r'(matin|après-midi|soir|nuit|\d+:\d+)(?:\s*(?:à|jusqu\'à)\s*(\d+:\d+))?'
     b=re.search(date, a)
     c=re.search(time,a)
     time1=datetime.now().date()
     hour_delta=6
+    hour=True
     if b:
-        hour=True
         if b.group(1)=="aujourd'hui":
             time1=time1
         elif b.group(1)=="demain":
@@ -196,7 +196,9 @@ def date(a):
         d.append(time_final.strftime('%Y-%m-%d %H:%M:%S'))
         time_final=time_final+timedelta(hours=1)
     return d
+dat=underscore(dat)
 dat=' '.join(dat)
+print(dat)
 print(date(dat))
 
 
