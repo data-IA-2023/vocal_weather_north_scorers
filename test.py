@@ -48,18 +48,20 @@ def colle_mot(a):
     for i in a:
         if len(i)==1 and i[0]=='h':
             i=':'
-        if i[0]!='_' and len(b)!=0:
+        if i[0]!='▁' and len(b)!=0:
             b[-1]+=i
         else:
             b.append(i)
     return b
 loc=colle_mot(loc)
+print(loc)
 #date=colle_mot(date)
 
 def virgule(a):
     b=""
+    a = a.lower().replace('\xa0', '')
     for carac in a:
-        if carac==',' or carac== ';':
+        if carac==',' or carac== ';' or carac== '.' or carac== '?' or carac== '!':
             b+=' , '
         else:
             b+=carac
@@ -68,11 +70,12 @@ def underscore(a):
     a=' '.join(a)
     b=''
     for carac in a:
-        if carac=='_':
+        if carac=='▁':
             b+=''
         else:
             b+=carac
     b=b.lower()
+    print(b)
     b=b.split(' ')
     return b
 def localisation(a,b):
@@ -80,6 +83,8 @@ def localisation(a,b):
     a=virgule(a)
     a=a.split(' ')
     b=underscore(b)
+    print(b)
+    print(a)
     c=[]
     for i in range(len(a)):
         if a[i] in b:
