@@ -36,7 +36,6 @@ from transformers import pipeline
 nlp = pipeline("ner", model = "bert/pipeline")
 
 doc = nlp(a)
-print(doc)
 for i in doc:
     print(i['word'], i['entity'])
 loc=[i['word'] for i in doc if i['entity'] in ['I-LOC']]
@@ -47,22 +46,54 @@ print(date)
 def colle_mot(a):
     b=[]
     for i in a:
-        if i[0]!='_':
+        if len(i)==1 and i[0]=='h':
+            i=':'
+        if i[0]!='_' and len(b)!=0:
             b[-1]+=i
         else:
             b.append(i)
+    return b
+loc=colle_mot(loc)
+#date=colle_mot(date)
 
-def localisation(a):
-    a.split(' ')
+def virgule(a):
+    b=""
+    for carac in a:
+        if carac==',' or carac== ';':
+            b+=' , '
+        else:
+            b+=carac
+    return b
+def underscore(a):
+    a=' '.join(a)
+    b=''
+    for carac in a:
+        if carac=='_':
+            b+=''
+        else:
+            b+=carac
+    b=b.lower()
+    b=b.split(' ')
+    return b
+def localisation(a,b):
+    a=a.lower()
+    a=virgule(a)
+    a=a.split(' ')
+    b=underscore(b)
+    c=[]
+    for i in range(len(a)):
+        if a[i] in b:
+            if i!=0 and a[i-1] in b:
+                c[-1]=c[-1]+' '+a[i]
+            else:
+                c.append(a[i])
+    return c
+loc=localisation(a,loc)
+print(loc)
 
-import re
-def date(a):
-    date = r'(aujourd\'hui|demain|après-demain|dans (\d+) jour;)'
-    time = r'(matin|après-midi|soir|nuit|\d+:\d+)'
-    b=re.search(date, a)
-    c=re.search(time,a)
-    if b:
-        if re.group(0):
-            a+1
-from datetime import datetime
-print(datetime.now)
+
+
+
+
+
+

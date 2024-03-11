@@ -9,7 +9,7 @@ def colle_mot(a):
             b.append(i)
     return b
             
-print(colle_mot(['_bon','_j','our','_je','_suis','h','_un','_h','omm','e']))
+print(colle_mot(['_bon','_j','our','_je','_suis','_h','_un','_h','omm','e']))
 
 import re
 from datetime import datetime, timedelta
@@ -67,6 +67,9 @@ def date(a):
             time1=time1+timedelta(days=int(b.group(2)))
         elif b.group(1) and 'h' in a:
             time2=(datetime.now())+timedelta(hours=int(b.group(2)))
+            if time2.minute > 30:
+                time2 += timedelta(hours=1)
+            time2 = time2.replace(minute=0, second=0, microsecond=0)
             time1 = time2.date()
             base_time = time2.strftime("%H:%M:%S")
             interval=False
@@ -109,7 +112,7 @@ def date(a):
         time_final=time_final+timedelta(hours=1)
     return d
 
-print(date(' dans 5 h'))
+print(date(' aprèsmain a 18:00'))
 
 
 
