@@ -64,8 +64,7 @@ def city_to_coordinates(city):
     print(f'Latitude, Longitude : {lat, lon}')
     return({'lat': lat,
             'lon' : lon})
-loc1='Tours'
-a=city_to_coordinates(loc1)
+coord=city_to_coordinates(loc[0])
 
 
 def get_weather_forecast(lat, lon, api_key):
@@ -78,4 +77,4 @@ def get_weather_forecast(lat, lon, api_key):
     else:
         print("Error")
         return None
-print(get_weather_forecast(a['lat'], a['lon'],"bb36cfc220c0ba490f150b9c4dad1ecd"))
+print(get_weather_forecast(coord['lat'], coord['lon'],"bb36cfc220c0ba490f150b9c4dad1ecd"))

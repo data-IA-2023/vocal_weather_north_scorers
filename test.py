@@ -199,10 +199,53 @@ def date(a):
 dat=underscore(dat)
 dat=' '.join(dat)
 print(dat)
-print(date(dat))
+date_final=date(dat)
+print(date_final)
+
+from geopy.geocoders import Nominatim
+from sys import argv
+def city_to_coordinates(city):
+
+    geolocator = Nominatim(user_agent="vocal_weather_app")
+
+    location = geolocator.geocode(city)
+    
+    lat = location.latitude
+    lon = location.longitude
+
+    print(f'Latitude, Longitude : {lat, lon}')
+    return({'lat': lat,
+            'lon' : lon})
+coord=city_to_coordinates(loc[0])
 
 
-
+def get_weather_forecast(lat, lon, api_key):
+    url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}"
+    response = requests.get(url)
+    
+    if response.status_code == 200:
+        data = response.json()
+        return data
+    else:
+        print("Error")
+        return None
+json_meteo=get_weather_forecast(coord['lat'], coord['lon'],"bb36cfc220c0ba490f150b9c4dad1ecd")
+liste_meteo_final=[]
+for i in json_meteo['list']:
+    if i['dt_txt'] in date_final:
+        liste_meteo_final.append(i)
+print(liste_meteo_final)
+dico_meteo={}
+element_garder=['main','weather','clouds','wind','rain']
+for i in liste_meteo_final:
+    date_key=i['dt_txt']
+    del i['dt_txt']
+    filtered_dict = {key: value for key, value in i.items() if key in element_garder}
+    if date_key in dico_meteo :
+        dico_meteo[date_key].append(filtered_dict)
+    else:
+        dico_meteo[date_key]=filtered_dict
+print(dico_meteo)
 
 
 
