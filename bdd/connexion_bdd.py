@@ -12,12 +12,17 @@ username = os.getenv('USERNAME')
 password = os.getenv('PASSWORD')
 
 # Urllib permet de prendre en compte le pilote ODBC dans l'url donné
-params = urllib.parse.quote_plus(
-    r'DRIVER={{ODBC Driver 18 for SQL Server}};SERVER=' + server + ';DATABASE=' + database + ';UID=' + username + ';PWD=' + password + ';Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
-)
+# params = urllib.parse.quote_plus(
+#     r"DRIVER={{ODBC Driver 18 for SQL Server}};SERVER=" + server + ";DATABASE=" + database + ";UID=" + username + ";PWD=" + password + ";Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+# )
 
 # Connexion au serveur Azure
-connexion = 'mssql+pyodbc:///?odbc_connect={}'.format(params)
+# connexion = 'mssql+pyodbc:///?odbc_connect={}'.format(params)
+connexion = (
+    f"mssql+pyodbc://{username}:{password}@{server}/{database}"
+    f"?driver=ODBC+Driver+18+for+SQL+Server"
+    "&Encrypt=yes&TrustServerCertificate=no&Connection+Timeout=30"
+)
 engine_azure = create_engine(connexion, echo=True)
 
 # Création de la session utilisateur
