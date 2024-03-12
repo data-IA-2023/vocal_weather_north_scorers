@@ -1,12 +1,13 @@
 from fastapi import FastAPI
-from api_stt.voice_recognizer import recognize_from_microphone
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+
 app = FastAPI()
 
+# Configuration de Jinja2
+templates = Jinja2Templates(directory="templates")
 
-@app.get("/")
-def read_root():
-    return {"Prochainement...": "Votre météo"}
-
-@app.post("/")
-def ask_weather():
-    return recognize_from_microphone()
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "titre": "Accueil"})
