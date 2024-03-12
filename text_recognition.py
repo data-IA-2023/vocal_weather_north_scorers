@@ -96,7 +96,7 @@ def localisation(a,b):
 
 def date(a):
     jours=['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
-    date = r'(aujourd\'hui|demain|aprèsmain|après-demain|(\d+) h|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|(\d+) jour)'
+    date = r'(aujourd\'hui|demain|main|après main|après demain|aprèsmain|après-demain|(\d+) h|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|(\d+) jour)'
     time = r'(matin|après-midi|soir|nuit|\d+:\d+)(?:\s*(?:à|jusqu\'à)\s*(\d+:\d+))?'
     b=re.search(date, a)
     c=re.search(time,a)
@@ -143,7 +143,7 @@ def date(a):
             jour_actuel=time1.strftime("%A").lower()
             difference=(7 + (jours.index(jour) - jours.index(jour_actuel))) % 7
             time1=time1+timedelta(days=difference)
-        elif b.group(1)=='après-demain' or b.group(1)=='aprèsmain':
+        elif b.group(1)=='après-demain' or b.group(1)=='aprèsmain' or b.group(1)=='après main' or b.group(1)=='main' or b.group(1)=='après demain':
             time1=time1+timedelta(days=2)
         elif b.group(2) and 'h' not in a:
             time1=time1+timedelta(days=int(b.group(2)))
@@ -183,7 +183,7 @@ def date(a):
     elif hour==True:
         base_time='08:00:00'
         interval=False
-        hour_delta=13
+        hour_delta=15
     time_final = datetime.combine(time1, datetime.strptime(base_time, '%H:%M:%S').time())
     if interval==False:
         time_final2=time_final+timedelta(hours=hour_delta)
