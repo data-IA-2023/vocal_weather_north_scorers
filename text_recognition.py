@@ -1,10 +1,20 @@
-
+#%% prep
 import os
 from dotenv import load_dotenv
 import azure.cognitiveservices.speech as speechsdk
 import requests
+import re
+from datetime import datetime, timedelta
+from geopy.geocoders import Nominatim
+from transformers import pipeline
+import time
 
 load_dotenv()
+
+def prep_bert():
+    nlp = pipeline("ner", model = "bert/pipeline")
+    return nlp
+
 def recognize_from_microphone():
     # This example
     #  requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
@@ -30,27 +40,12 @@ def recognize_from_microphone():
             print("Error details: {}".format(cancellation_details.error_details))
             print("Did you set the speech resource key and region values?")
 
-a=recognize_from_microphone()
-from transformers import pipeline
-
-nlp = pipeline("ner", model = "bert/pipeline")
-
-doc = nlp(a)
-for i in doc:
-    print(i['word'], i['entity'])
-loc=[i['word'] for i in doc if i['entity'] in ['I-LOC']]
-dat=[i['word'] for i in doc if i['entity'] in ['I-DATE']]  
-print(loc)
-print(dat)
-
-def create_entity(a):
-    nlp = pipeline("ner", model = "bert/pipeline")
+def create_entity(a,nlp):
     doc = nlp(a)
     loc=[i['word'] for i in doc if i['entity'] in ['I-LOC']]
     dat=[i['word'] for i in doc if i['entity'] in ['I-DATE']]  
     return({'loc': loc,
             'dat' : dat})
-
 
 def colle_mot(a):
     b=[]
@@ -62,10 +57,6 @@ def colle_mot(a):
         else:
             b.append(i)
     return b
-loc=colle_mot(loc)
-print(loc)
-if len(dat)>0:
-    dat=colle_mot(dat)
 
 def virgule(a):
     b=""
@@ -76,6 +67,7 @@ def virgule(a):
         else:
             b+=carac
     return b
+
 def underscore(a):
     a=' '.join(a)
     b=''
@@ -87,6 +79,7 @@ def underscore(a):
     b=b.lower()
     b=b.split(' ')
     return b
+
 def localisation(a,b):
     a=a.lower()
     a=virgule(a)
@@ -100,11 +93,7 @@ def localisation(a,b):
             else:
                 c.append(a[i])
     return c
-loc=localisation(a,loc)
-print(loc)
 
-import re
-from datetime import datetime, timedelta
 def date(a):
     jours=['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
     date = r'(aujourd\'hui|demain|aprèsmain|après-demain|(\d+) h|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|(\d+) jour)'
@@ -205,61 +194,29 @@ def date(a):
         d.append(time_final.strftime('%Y-%m-%d %H:%M:%S'))
         time_final=time_final+timedelta(hours=1)
     return d
-dat=underscore(dat)
-dat=' '.join(dat)
-print(dat)
-date_final=date(dat)
-print(date_final)
 
-from geopy.geocoders import Nominatim
-from sys import argv
 def city_to_coordinates(city):
-
     geolocator = Nominatim(user_agent="vocal_weather_app")
-
     location = geolocator.geocode(city)
-    
     lat = location.latitude
     lon = location.longitude
-
-    print(f'Latitude, Longitude : {lat, lon}')
     return({'lat': lat,
             'lon' : lon})
-coord=city_to_coordinates(loc[0])
 
-
-def get_weather_forecast(lat, lon, api_key):
+def get_weather_forecast(lat, lon, api_key=os.environ['meteo_key']):
     url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}"
     response = requests.get(url)
-    
     if response.status_code == 200:
         data = response.json()
         return data
     else:
         print("Error")
         return None
-json_meteo=get_weather_forecast(coord['lat'], coord['lon'],"bb36cfc220c0ba490f150b9c4dad1ecd")
-liste_meteo_final=[]
-for i in json_meteo['list']:
-    if i['dt_txt'] in date_final:
-        liste_meteo_final.append(i)
-print(liste_meteo_final)
-dico_meteo={}
-element_garder=['main','weather','clouds','wind','rain']
-for i in liste_meteo_final:
-    date_key=i['dt_txt']
-    del i['dt_txt']
-    filtered_dict = {key: value for key, value in i.items() if key in element_garder}
-    if date_key in dico_meteo :
-        dico_meteo[date_key].append(filtered_dict)
-    else:
-        dico_meteo[date_key]=filtered_dict
-print(dico_meteo)
-
-def trie_json(json_meteo):
+    
+def trie_json(json_meteo,date):
     liste_meteo_final=[]
     for i in json_meteo['list']:
-        if i['dt_txt'] in date_final:
+        if i['dt_txt'] in date:
             liste_meteo_final.append(i)
     dico_meteo={}
     element_garder=['main','weather','clouds','wind','rain']
@@ -273,6 +230,60 @@ def trie_json(json_meteo):
             dico_meteo[date_key]=filtered_dict
     return dico_meteo
 
-
-
-
+def text_recognation(nlp):
+    try:
+        text_donne=recognize_from_microphone()
+        try:
+            entites=create_entity(text_donne,nlp)
+            try:
+                loc=colle_mot(entites['loc'])
+                try:
+                    dat=colle_mot(entites['dat'])
+                    try:
+                        loc=localisation(text_donne,loc)
+                        try:
+                            dat=underscore(dat)
+                            dat=' '.join(dat)
+                            try:
+                                date_final=date(dat)
+                                return loc,date_final
+                            except:
+                                raise ValueError('date pas transcriptable')
+                        except:
+                            raise ValueError('probleme ave underscore')
+                    except:
+                        raise ValueError('probleme avec les entité loc')
+                except:
+                    raise ValueError('probleme avec les entité dat (collage)')
+            except:
+                raise ValueError('probleme avec les entité loc (collage)')
+        except:
+            raise ValueError('probleme avec Bert')
+    except:
+        raise ValueError('probleme avec Text_to_Speech Azure')
+def meteo(localisation,date_final):
+    try :
+        coord=city_to_coordinates(localisation)
+        try:
+            json_meteo=get_weather_forecast(coord['lat'], coord['lon'])
+            try:
+                dico_meteo=trie_json(json_meteo,date_final)
+                return dico_meteo
+            except:
+                raise ValueError('probleme avec le trie du Json')
+        except:
+            raise ValueError('probleme avec Api Meteo')
+    except:
+        raise ValueError('probleme avec transcription loc')
+nlp=prep_bert()
+#%% fonction
+def func_final(nlp):
+    a={}
+    loc, date_final= text_recognation(nlp)
+    for localisation in loc:
+        a[localisation]=meteo(localisation,date_final)
+        time.sleep(0.5)
+    return a
+a=func_final(nlp)
+print(a)
+# %%
