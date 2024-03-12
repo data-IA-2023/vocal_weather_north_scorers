@@ -1,2 +1,8 @@
 fastapi
 uvicorn
+pyodbc
+sqlalchemy
+urllib3
+transformers
+protobuf
+pydantic
