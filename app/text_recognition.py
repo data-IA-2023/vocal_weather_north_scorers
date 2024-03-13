@@ -19,26 +19,38 @@ def recognize_from_microphone():
     # This example
     #  requires environment variables named "SPEECH_KEY" and "SPEECH_REGION"
     speech_config = speechsdk.SpeechConfig(subscription=os.environ['SPEECH_KEY'], region=os.environ['SPEECH_REGION'])
-    speech_config.speech_recognition_language="fr-FR"
+    speech_config.speech_recognition_language = "fr-FR"
 
     audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
     speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
 
     print("Speak into your microphone.")
-    speech_recognition_result = speech_recognizer.recognize_once_async().get()
-
-    if speech_recognition_result.reason == speechsdk.ResultReason.RecognizedSpeech:
-        a=speech_recognition_result.text
-        print("Recognized: {}".format(speech_recognition_result.text))
-        return a
-    elif speech_recognition_result.reason == speechsdk.ResultReason.NoMatch:
-        print("No speech could be recognized: {}".format(speech_recognition_result.no_match_details))
-    elif speech_recognition_result.reason == speechsdk.ResultReason.Canceled:
-        cancellation_details = speech_recognition_result.cancellation_details
-        print("Speech Recognition canceled: {}".format(cancellation_details.reason))
-        if cancellation_details.reason == speechsdk.CancellationReason.Error:
-            print("Error details: {}".format(cancellation_details.error_details))
-            print("Did you set the speech resource key and region values?")
+    try:
+        speech_recognition_result = speech_recognizer.recognize_once_async().get()
+        if speech_recognition_result.reason == speechsdk.ResultReason.RecognizedSpeech:
+            print("Recognized: {}".format(speech_recognition_result.text))
+            return speech_recognition_result.text, 200
+        elif speech_recognition_result.reason == speechsdk.ResultReason.NoMatch:
+            print("No speech could be recognized: {}".format(speech_recognition_result.no_match_details))
+            return "No speech could be recognized", 404
+        elif speech_recognition_result.reason == speechsdk.ResultReason.Canceled:
+            cancellation_details = speech_recognition_result.cancellation_details
+            print("Speech Recognition canceled: {}".format(cancellation_details.reason))
+            if cancellation_details.reason == speechsdk.CancellationReason.Error:
+                print("Error details: {}".format(cancellation_details.error_details))
+                print("Did you set the speech resource key and region values?")
+                # Récupérer le code d'état HTTP à partir des détails de l'erreur
+                status_code = cancellation_details.error_details.get("statusCode")
+                if status_code:
+                    return "Speech Recognition canceled", status_code
+    except Exception as ex:
+        # En cas d'erreur, capturer l'exception et extraire le code d'état HTTP
+        if hasattr(ex, "response"):
+            status_code = ex.response.status_code
+            return str(ex), status_code
+        else:
+            print("Error:", ex)
+            return str(ex), 500
 
 def create_entity(a,nlp):
     doc = nlp(a)
@@ -229,61 +241,3 @@ def trie_json(json_meteo,date):
         else:
             dico_meteo[date_key]=filtered_dict
     return dico_meteo
-
-def text_recognation(nlp):
-    try:
-        text_donne=recognize_from_microphone()
-        try:
-            entites=create_entity(text_donne,nlp)
-            try:
-                loc=colle_mot(entites['loc'])
-                try:
-                    dat=colle_mot(entites['dat'])
-                    try:
-                        loc=localisation(text_donne,loc)
-                        try:
-                            dat=underscore(dat)
-                            dat=' '.join(dat)
-                            try:
-                                date_final=date(dat)
-                                return loc,date_final
-                            except:
-                                raise ValueError('date pas transcriptable')
-                        except:
-                            raise ValueError('probleme ave underscore')
-                    except:
-                        raise ValueError('probleme avec les entité loc')
-                except:
-                    raise ValueError('probleme avec les entité dat (collage)')
-            except:
-                raise ValueError('probleme avec les entité loc (collage)')
-        except:
-            raise ValueError('probleme avec Bert')
-    except:
-        raise ValueError('probleme avec Text_to_Speech Azure')
-def meteo(localisation,date_final):
-    try :
-        coord=city_to_coordinates(localisation)
-        try:
-            json_meteo=get_weather_forecast(coord['lat'], coord['lon'])
-            try:
-                dico_meteo=trie_json(json_meteo,date_final)
-                return dico_meteo
-            except:
-                raise ValueError('probleme avec le trie du Json')
-        except:
-            raise ValueError('probleme avec Api Meteo')
-    except:
-        raise ValueError('probleme avec transcription loc')
-nlp=prep_bert()
-#%% fonction
-def func_final(nlp):
-    a={}
-    loc, date_final= text_recognation(nlp)
-    for localisation in loc:
-        a[localisation]=meteo(localisation,date_final)
-        time.sleep(0.5)
-    return a
-a=func_final(nlp)
-print(a)
-# %%

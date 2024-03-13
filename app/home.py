@@ -4,8 +4,12 @@ from fastapi.templating import Jinja2Templates
 from bdd.connexion_bdd import SessionLocal
 from sqlalchemy.orm import Session
 from bdd.models import MonitoredData
+from datetime import datetime
+import asyncio
+from cachetools import cached, TTLCache
+from transformers import pipeline
 from bdd.crud import create_monitored_data, get_monitored_data, get_monitored_data_by_id, update_monitored_data, delete_monitored_data
-
+from text_recognition import recognize_from_microphone, create_entity, colle_mot, underscore, city_to_coordinates, date, get_weather_forecast, trie_json 
 app = FastAPI()
 
 # Récupération de la session de base de données
@@ -16,12 +20,72 @@ def get_db():
     finally:
         db.close()
 
+# Récupération du BERT depuis le cache
+cache = TTLCache(maxsize=1, ttl=600)
+
+@cached(cache)
+def prep_bert():
+    nlp = pipeline("ner", model = "bert/pipeline")
+    return nlp
+
 # Configuration de Jinja2
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "titre": "Accueil"})
+async def func_final(db: Session = Depends(get_db)):
+    monitoring={}
+    nlp = prep_bert()
+
+    text_donne,status_azure=recognize_from_microphone()
+    monitoring['status_azure']=status_azure
+    monitoring['texte']=text_donne
+    if status_azure != 200:
+        error_message="Probleme avec le text_to_speech"
+        return templates.TemplateResponse("erreur.html", {'monitoring':monitoring, "error_message": error_message})
+    
+    entites=create_entity(text_donne,nlp)
+
+    if len(entites['loc'])==0:
+        error_message="Veuillez donner une localisation précise"
+        return templates.TemplateResponse("erreur.html", {'monitoring':monitoring, "error_message": error_message})
+    
+    loc=colle_mot(entites['loc'])
+    loc=localisation(text_donne,loc)
+    if len(entites['dat'])==0:
+            heure_actuelle = datetime.now().replace(minute=0, second=0, microsecond=0)
+            heure_actu = heure_actuelle.strftime("%Hh00")
+            date_base=f"aujourd'hui à {heure_actu}"
+            entites['dat'].append(date_base)
+    dat=colle_mot(entites['dat'])
+    dat=underscore(dat)
+    dat=' '.join(dat)
+    date_final=date(dat)
+
+    monitoring['date']=date_final
+    monitoring['localisations']=[]
+    monitoring['coord']={}
+    monitoring['status_code_geoloc']={}
+    monitoring['status_code_weather']={}
+    monitoring['dico_meteo']={}
+
+    for localisation in loc:
+        monitoring['localisations'].append(localisation)
+        coord,status_code_geoloc=city_to_coordinates(localisation)
+        monitoring['coord'][localisation]=coord
+        monitoring['satus_code_geoloc'][localisation]=status_code_geoloc
+        if coord is None:
+            pass
+        else:
+            json_meteo,status_code_weather=get_weather_forecast(coord['lat'], coord['lon'])
+            monitoring['status_code_weather'][localisation]=status_code_weather
+            if json_meteo is None:
+                monitoring['dico_meteo'][localisation]=None
+                pass
+            else:
+                dico_meteo=trie_json(json_meteo,date_final)
+                monitoring['dico_meteo'][localisation]=dico_meteo
+        await asyncio.sleep(0.5)
+    return templates.TemplateResponse(".html", {'monitoring':monitoring})
 
 # CRUD Monitoring
 # Création d'une entrée dans la base de donnée
