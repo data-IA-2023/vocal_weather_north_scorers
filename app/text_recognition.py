@@ -7,6 +7,7 @@ import re
 from datetime import datetime, timedelta
 from geopy.geocoders import Nominatim
 from transformers import pipeline
+import folium
 import time
 
 load_dotenv()
@@ -220,3 +221,11 @@ def trie_json(json_meteo,date):
         else:
             dico_meteo[date_key]=filtered_dict
     return dico_meteo
+
+def map_generator(localisations):
+    carte = folium.Map(location=[localisations[list(localisations.keys())[0]]['lat'], localisations[list(localisations.keys())[0]]['lon']], zoom_start=4, tiles="cartodb positron")
+    for loc, coord in localisations.items():
+        folium.Marker([coord['lat'], coord['lon']], popup=loc).add_to(carte) 
+    carte.fit_bounds([(coord['lat'], coord['lon']) for coord in localisations.values()])
+    carte_html = carte._repr_html_()
+    return carte_html

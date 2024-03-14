@@ -7,9 +7,13 @@ from bdd.models import MonitoredData
 from datetime import datetime
 import asyncio
 from cachetools import cached, TTLCache
+import folium
+import json
 from transformers import pipeline
 from bdd.crud import create_monitored_data, get_monitored_data, get_monitored_data_by_id, update_monitored_data, delete_monitored_data
-from text_recognition import recognize_from_microphone, create_entity, colle_mot, underscore, city_to_coordinates, date, get_weather_forecast, trie_json, localisation_func 
+from text_recognition import recognize_from_microphone, create_entity, colle_mot, underscore, city_to_coordinates, date, get_weather_forecast, trie_json, localisation_func, map_generator
+
+
 app = FastAPI()
 
 # Récupération de la session de base de données
