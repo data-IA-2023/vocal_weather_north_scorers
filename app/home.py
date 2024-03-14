@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, HTTPException
+from fastapi import FastAPI, Request, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from bdd.connexion_bdd import SessionLocal
@@ -22,17 +22,20 @@ def get_db():
 
 # Récupération du BERT depuis le cache
 cache = TTLCache(maxsize=1, ttl=600)
-
-@cached(cache)
-def prep_bert():
-    nlp = pipeline("ner", model = "saved_pipe")
+async def prep_bert():
+    nlp = pipeline("ner", model="saved_pipe")
     return nlp
+async def save_prep_bert():
+    if 'nlp' not in cache:
+        cache['nlp'] = await prep_bert()
+    return cache['nlp']
 
 # Configuration de Jinja2
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
-async def load_index(request: Request):
+async def load_index(request: Request, background_tasks: BackgroundTasks):
+    background_tasks.add_task(save_prep_bert)
     monitoring = {
         'status_azure': None,
         'texte': None,
@@ -57,13 +60,13 @@ async def func_final(request: Request, db: Session = Depends(get_db),):
         'status_code_weather': {},
         'dico_meteo': {},
     }
-    nlp = prep_bert()
 
     # Variables contenant les éléments à afficher dans les templates
     # contenu = None
     error_message = None
 
     text_donne,status_azure=recognize_from_microphone()
+    nlp = await save_prep_bert()
     monitoring['status_azure']=status_azure
     monitoring['texte']=text_donne
     if status_azure != 200:

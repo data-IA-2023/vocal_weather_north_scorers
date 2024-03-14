@@ -107,104 +107,77 @@ def localisation_func(a,b):
     return c
 
 def date(a):
-    jours=['monday','tuesday','wednesday','thursday','friday','saturday','sunday']
-    date = r'(aujourd\'hui|demain|main|après main|après demain|aprèsmain|après-demain|(\d+) h|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|(\d+) jour)'
-    time = r'(matin|après-midi|soir|nuit|\d+:\d+)(?:\s*(?:à|jusqu\'à)\s*(\d+:\d+))?'
-    b=re.search(date, a)
-    c=re.search(time,a)
-    time1=datetime.now().date()
-    hour_delta=6
-    hour=True
+    a = a.lower()
+    jours = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+    date_regex = r'(aujourd\'hui|demain|main|après main|après demain|aprèsmain|après-demain|(\d+) h|lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|(\d+) jour|\d+\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre))'
+    time_regex = r'(matin|après-midi|soir|nuit|\d+:\d+)(?:\s*(?:à|jusqu\'à)\s*(\d+:\d+))?'
+    dico_mois = {'janvier':1,'février':2,'mars':3,'avril':4,'mai':5,'juin':6,'juillet':7,'août':8,'septembre':9,'octobre':10,'novembre':11,'décembre':12}
+    b = re.search(date_regex, a)
+    c = re.search(time_regex, a)
+    time1 = datetime.now().date()
+    base_time_mid = datetime.now().replace(minute=0, second=0, microsecond=0)
+    base_time = base_time_mid.strftime('%H:%M:%S')
+    hour_delta = 6
+    interval = False
+    hour = True
     if b:
-        if b.group(1)=="aujourd'hui":
-            time1=time1
-        elif b.group(1)=="demain":
-            time1=time1+timedelta(days=1)
-        elif b.group(1)=="lundi":
-            jour='monday'
-            jour_actuel=time1.strftime("%A").lower()
-            difference=(7 + (jours.index(jour) - jours.index(jour_actuel))) % 7
-            time1=time1+timedelta(days=difference)
-        elif b.group(1)=="mardi":
-            jour='tuesday'
-            jour_actuel=time1.strftime("%A").lower()
-            difference=(7 + (jours.index(jour) - jours.index(jour_actuel))) % 7
-            time1=time1+timedelta(days=difference)
-        elif b.group(1)=="mercredi":
-            jour='wednesday'
-            jour_actuel=time1.strftime("%A").lower()
-            difference=(7 + (jours.index(jour) - jours.index(jour_actuel))) % 7
-            time1=time1+timedelta(days=difference)
-        elif b.group(1)=="jeudi":
-            jour='thursday'
-            jour_actuel=time1.strftime("%A").lower()
-            difference=(7 + (jours.index(jour) - jours.index(jour_actuel))) % 7
-            time1=time1+timedelta(days=difference)
-        elif b.group(1)=="vendredi":
-            jour='friday'
-            jour_actuel=time1.strftime("%A").lower()
-            difference=(7 + (jours.index(jour) - jours.index(jour_actuel))) % 7
-            time1=time1+timedelta(days=difference)
-        elif b.group(1)=="samedi":
-            jour='saturday'
-            jour_actuel=time1.strftime("%A").lower()
-            difference=(7 + (jours.index(jour) - jours.index(jour_actuel))) % 7
-            time1=time1+timedelta(days=difference)
-        elif b.group(1)=="dimanche":
-            jour='sunday'
-            jour_actuel=time1.strftime("%A").lower()
-            difference=(7 + (jours.index(jour) - jours.index(jour_actuel))) % 7
-            time1=time1+timedelta(days=difference)
-        elif b.group(1)=='après-demain' or b.group(1)=='aprèsmain' or b.group(1)=='après main' or b.group(1)=='main' or b.group(1)=='après demain':
-            time1=time1+timedelta(days=2)
+        if b.group(1) == "aujourd'hui":
+            time1 = time1
+        elif b.group(1) == "demain":
+            time1 = time1 + timedelta(days=1)
+        elif b.group(1) in jours:
+            jour = b.group(1)
+            jour_actuel = time1.strftime("%A").lower()
+            difference = (7 + (jours.index(jour) - jours.index(jour_actuel))) % 7
+            time1 = time1 + timedelta(days=difference)
+        elif b.group(1) == 'après-demain' or b.group(1) == 'aprèsmain' or b.group(1) == 'après main' or b.group(1) == 'main' or b.group(1) == 'après demain':
+            time1 = time1 + timedelta(days=2)
         elif b.group(2) and 'h' not in a:
-            time1=time1+timedelta(days=int(b.group(2)))
+            time1 = time1 + timedelta(days=int(b.group(2)))
         elif b.group(1) and 'h' in a:
-            time2=(datetime.now())+timedelta(hours=int(b.group(2)))
+            time2 = datetime.now() + timedelta(hours=int(b.group(2)))
             if time2.minute > 30:
                 time2 += timedelta(hours=1)
             time2 = time2.replace(minute=0, second=0, microsecond=0)
             time1 = time2.date()
             base_time = time2.strftime("%H:%M:%S")
-            interval=False
-            hour=False
-    else:
-        time1=time1
+            hour = False
+        elif b.group(1) and len(b.group(1).split(" "))>1:
+            if b.group(1) and b.group(1).split(" ")[1] in dico_mois:
+                jour, mois = b.group(1).split()
+                mois_num = dico_mois.get(mois.lower())
+                if mois_num:
+                    time1 = datetime(time1.year, mois_num, int(jour)) 
     if c:
-        if c.group(1)=='matin':
-            base_time='06:00:00'
-            interval=False
-        elif c.group(1)=='après-midi':
-            base_time='13:00:00'
-            interval=False
-        elif c.group(1)=='soir':
-            base_time='18:00:00'
-            interval=False
-        elif c.group(1)=='nuit':
-            base_time='24:00:00'
-            interval=False
-        elif c.group(1)=='midi':
-            base_time='10:00:00'
-            interval=False
-        else :
-            base_time=c.group(1)+':00'
-            interval=False
+        if c.group(1) == 'matin':
+            base_time = '06:00:00'
+        elif c.group(1) == 'après-midi':
+            base_time = '13:00:00'
+        elif c.group(1) == 'soir':
+            base_time = '18:00:00'
+        elif c.group(1) == 'nuit':
+            base_time = '24:00:00'
+        elif c.group(1) == 'midi':
+            base_time = '10:00:00'
+        else:
+            base_time = c.group(1) + ':00'
             if c.group(2):
-                 base_time2=c.group(2)+':00'
-                 interval=True
-    elif hour==True:
-        base_time='08:00:00'
-        interval=False
-        hour_delta=15
+                base_time2 = c.group(2) + ':00'
+                interval = True
+    elif hour == True:
+        base_time = '08:00:00'
+        hour_delta = 15
+    
     time_final = datetime.combine(time1, datetime.strptime(base_time, '%H:%M:%S').time())
-    if interval==False:
-        time_final2=time_final+timedelta(hours=hour_delta)
+    if interval == False:
+        time_final2 = time_final + timedelta(hours=hour_delta)
     else:
-        time_final2=datetime.combine(time1, datetime.strptime(base_time2, '%H:%M:%S').time())
-    d=[]
-    while time_final2>time_final:
+        time_final2 = datetime.combine(time1, datetime.strptime(base_time2, '%H:%M:%S').time())
+    
+    d = []
+    while time_final2 > time_final:
         d.append(time_final.strftime('%Y-%m-%d %H:%M:%S'))
-        time_final=time_final+timedelta(hours=1)
+        time_final = time_final + timedelta(hours=1)
     return d
 
 def city_to_coordinates(city):
