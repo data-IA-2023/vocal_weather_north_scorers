@@ -1,7 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
-import urllib
 from dotenv import load_dotenv
 
 # Chargement des informations depuis le fichier .env

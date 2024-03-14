@@ -92,7 +92,7 @@ def underscore(a):
     b=b.split(' ')
     return b
 
-def localisation(a,b):
+def localisation_func(a,b):
     a=a.lower()
     a=virgule(a)
     a=a.split(' ')
@@ -208,22 +208,28 @@ def date(a):
     return d
 
 def city_to_coordinates(city):
-    geolocator = Nominatim(user_agent="vocal_weather_app")
-    location = geolocator.geocode(city)
-    lat = location.latitude
-    lon = location.longitude
-    return({'lat': lat,
-            'lon' : lon})
+    url = "https://nominatim.openstreetmap.org/search"
+    params = {"q": city, "format": "json"}
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        data = response.json()
+        if data:
+            lat = float(data[0]["lat"])
+            lon = float(data[0]["lon"])
+            return {'lat': lat, 'lon': lon}, response.status_code
+        else:
+            return None, response.status_code 
+    else:
+        return None, response.status_code 
 
 def get_weather_forecast(lat, lon, api_key=os.environ['meteo_key']):
     url = f"https://api.openweathermap.org/data/2.5/forecast?lat={lat}&lon={lon}&appid={api_key}"
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
-        return data
+        return data, response.status_code
     else:
-        print("Error")
-        return None
+        return None, response.status_code
     
 def trie_json(json_meteo,date):
     liste_meteo_final=[]

@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, JSON
 from sqlalchemy.sql import func
-from connexion_bdd import Base
+from bdd.connexion_bdd import Base
 
 class MonitoredData(Base):
     __tablename__ = "monitored_data"
