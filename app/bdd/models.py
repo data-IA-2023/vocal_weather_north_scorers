@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, JSON
+from sqlalchemy import Column, Integer, String, DateTime, JSON, Boolean
 from sqlalchemy.sql import func
 from bdd.connexion_bdd import Base
 
@@ -10,12 +10,12 @@ class MonitoredData(Base):
     azureSTT = Column(String(250))
     statusCodeAzureSTT = Column(Integer)
     extractedEntity = Column(String(100))
-    statusCodeNER = Column(Integer)
     position = Column(String(50))
     statusCodePosition = Column(Integer)
     meteo = Column(JSON)
     statusCodeMeteo = Column(Integer)
-    finalResponse = Column(String(50))
+    isSatisfait = Column(Boolean)
+    commentaires = Column(String(70))
 
     # Pour sauvegarder dans la base de données
     def to_dict(self):
@@ -25,11 +25,11 @@ class MonitoredData(Base):
             "azureSTT": self.azureSTT,
             "statusCodeAzureSTT": self.statusCodeAzureSTT,
             "extractedEntity": self.extractedEntity,
-            "statusCodeNER": self.statusCodeNER,
             "position": self.position,
             "statusCodePosition": self.statusCodePosition,
             "meteo": self.meteo,
             "statusCodeMeteo": self.statusCodeMeteo,
-            "finalResponse": self.finalResponse,
+            "isSatisfait": self.isSatisfait,
+            "commentaires": self.commentaires
         }
 

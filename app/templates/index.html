@@ -35,6 +35,7 @@
                 .then(response => response.json())
                 .then(data => {
                     let resultsHTML = '';
+                    const monitoringData = data;
                     if (data.localisations && data.localisations.length > 0) {
                         data.localisations.forEach(localisation => {
                             resultsHTML += `<div class="row mb-4">`;
@@ -57,10 +58,28 @@
                                     </div>
                                 `;
                             });
-                            resultsHTML += `</div>`; // Fin de la ligne pour cette localisation
+                            resultsHTML += `</div>`;
                         });
+                        resultsHTML += `
+                        <form action="/soumission-data" method="post" id="feedback-form">
+                            <div><label>Êtes-vous satisfait de la météo ?</label></div>
+                            <div>
+                                <input type="radio" id="satisfaitOui" name="isSatisfait" value="true" required>
+                                <label for="satisfaitOui">Oui</label>
+                                <input type="radio" id="satisfaitNon" name="isSatisfait" value="false" required>
+                                <label for="satisfaitNon">Non</label>
+                            </div>
+                            <div>
+                                <label for="commentaires">Commentaires (facultatif) :</label>
+                                <input type="text" id="commentaires" name="commentaires">
+                            </div>
+                            <input type="hidden" id="monitoringData" name="monitoringData">
+                            <div><button type="submit">Soumettre</button></div>
+                        </form>
+                    `;
                         document.getElementById('results').innerHTML = resultsHTML;
-                        document.getElementById('results').classList.add("p-3", "border", "border-secondary", "rounded", "bg-info", "my-3"); // Styles supplémentaires
+                        document.getElementById('monitoringData').value = JSON.stringify(monitoringData);
+                        setupSubmit(monitoringData);
                     } else {
                         document.getElementById('results').innerHTML = '<p>Aucune donnée météo disponible.</p>';
                     }
@@ -70,6 +89,41 @@
                     document.getElementById('results').innerHTML = '<p>Erreur lors de la récupération des données météo.</p>';
                 });
         });
+
+        function setupSubmit(monitoringData) {
+            const form = document.getElementById('feedback-form');
+            if (form) {
+                form.addEventListener('submit', async function(event) {
+                        event.preventDefault();
+
+                        const formData = new FormData(event.target);
+                        const isSatisfait = formData.get('isSatisfait') === 'true';
+                        const commentaires = formData.get('commentaires');
+                        const monitoringData = JSON.parse(formData.get('monitoringData'));
+
+    
+                        const dataToSend = {
+                        ...monitoringData,
+                        isSatisfait: isSatisfait,
+                        commentaires: commentaires,
+                        };
+
+                        try {
+                            const response = await fetch('/soumission-data', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(dataToSend),
+                        });
+                        const result = await response.json();
+                        console.log(result.message);
+                    } catch (error) {
+                        console.error('Erreur à la transmission de données :', error);
+                    }
+                });
+            }
+        }
     </script>
         
         

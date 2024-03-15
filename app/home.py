@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, HTTPException, BackgroundTasks
+from fastapi import FastAPI, Request, Depends, HTTPException, BackgroundTasks, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from bdd.connexion_bdd import SessionLocal
@@ -116,6 +116,33 @@ async def func_final(request: Request, db: Session = Depends(get_db),):
                 monitoring['dico_meteo'][localisation]=dico_meteo
         await asyncio.sleep(0.5)
     return JSONResponse(content=monitoring)
+
+# Envoie des données monitorées
+@app.post("/soumission-data")
+async def soumettreData(request: Request, db: Session = Depends(get_db)):
+    try:
+        form_data = await request.json()
+
+        meteo_as_string = json.dumps(form_data.get("meteo", {}))
+        position_as_string = json.dumps(form_data.get("coord", {}))
+        
+        monitored_data = MonitoredData(
+            azureSTT=form_data.get("texte", ""),
+            statusCodeAzureSTT=form_data.get("status_azure", 0),
+            extractedEntity=json.dumps(form_data.get("dico_meteo", {})),
+            position=position_as_string,
+            statusCodePosition=form_data.get("status_code_geoloc", 0),
+            meteo=meteo_as_string,
+            statusCodeMeteo=form_data.get("status_code_weather", 0),
+            isSatisfait=form_data.get("isSatisfait", False),
+            commentaires=form_data.get("commentaires", ""),
+        )
+        db.add(monitored_data)
+        db.commit()
+        return {"message": "Feedback soumis avec succès"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=f"Erreur lors de la soumission des données")
 
 # CRUD Monitoring
 # Création d'une entrée dans la base de donnée
