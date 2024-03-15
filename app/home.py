@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from bdd.models import MonitoredData
 from datetime import datetime
 import asyncio
+import pandas as pd
 from cachetools import cached, TTLCache
 import folium
 import json
@@ -180,3 +181,13 @@ def delete_monitored_data(id: int, db: Session = Depends(get_db)):
     if not success:
         raise HTTPException(status_code=404, detail="MonitoredData not found")
     return {"ok": True}
+
+# Vue du moniteur
+@app.get("/monitor-dataframe")
+async def monitor_dataframe(request: Request, db: Session = Depends(get_db)):
+    query_result = db.query(MonitoredData).all()
+    data_dict = [item.to_dict() for item in query_result]
+    df = pd.DataFrame(data_dict)
+    df_html = df.to_html()
+    
+    return templates.TemplateResponse("monitor.html", {"request": request, "df_html": df_html})
